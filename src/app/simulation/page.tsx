@@ -8,6 +8,7 @@ import CompoundInterestChart from "@/components/CompoundInterestChart";
 import PaymentDetailView from "@/components/PaymentDetailView";
 import CalculationDetailsPanel from "@/components/CalculationDetailsPanel";
 import InfoTooltip from "@/components/ui/info-tooltip";
+import SpiralFooter from "@/components/ui/spiral-footer";
 import { Button } from "@/components/ui/button";
 import {
   generateAmortizationSchedule,
@@ -436,6 +437,7 @@ export default function SimulationPage() {
         simulation={simulation}
         currency={currency as CurrencyFormatter}
       />
+      <SpiralFooter />
     </div>
   );
 }

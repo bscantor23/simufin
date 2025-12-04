@@ -1,8 +1,9 @@
 import LoanForm from "@/components/LoanForm";
+import SpiralFooter from "@/components/ui/spiral-footer";
 
 export default function Home() {
   return (
-    <div className="min-h-screen font-roboto relative" style={{ backgroundColor: '#f5f5f5' }}>
+    <div className="min-h-screen font-roboto relative" style={{ backgroundColor: "#f5f5f5" }}>
       {/* Navbar */}
       <nav className="bg-white shadow-lg relative z-10" style={{ height: '80px' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
@@ -14,7 +15,7 @@ export default function Home() {
       </nav>
 
       {/* Contenido principal */}
-      <div className="py-12 px-4">
+      <div className="pt-12 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
@@ -31,6 +32,7 @@ export default function Home() {
           </div>
         </div>
       </div>
+      <SpiralFooter />
     </div>
   );
 }

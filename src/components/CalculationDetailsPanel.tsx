@@ -234,7 +234,7 @@ Resultado:
     <>
       {/* Collapsed State */}
       {!isExpanded && (
-        <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end">
+        <div className="fixed bottom-4 right-4 z-60 flex flex-col items-end">
           {/* Animated Popup */}
           <div className="bg-yellow-500 text-white text-sm px-3 py-2 rounded-lg shadow-lg mb-2 animate-bounce">
             Verifica los cálculos aquí
@@ -266,7 +266,7 @@ Resultado:
 
       {/* Expanded State */}
       {isExpanded && (
-        <div className="fixed top-4 right-4 bottom-4 w-120 bg-white shadow-xl z-50 overflow-hidden flex flex-col rounded-lg">
+        <div className="fixed top-4 right-4 bottom-4 w-120 bg-white shadow-xl z-60 overflow-hidden flex flex-col rounded-lg">
           <div className="flex items-center justify-between p-4 bg-yellow-500 text-white">
             <h3 className="text-lg font-semibold">Detalles de Cálculos</h3>
             <button

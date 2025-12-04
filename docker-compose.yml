@@ -1,14 +1,9 @@
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+  simufin-app:
+    build: .
     container_name: simufin-app
-    environment:
-      - NODE_ENV=production
-      - PORT=3000
     ports:
-      - "80:3000"
+      - "3000:3000"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]

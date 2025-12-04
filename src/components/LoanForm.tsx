@@ -151,7 +151,7 @@ export default function LoanForm() {
   };
 
   return (
-    <div className="max-w-lg mx-auto p-8">
+    <div className="max-w-lg mx-auto pt-8">
       <form onSubmit={handleSubmit} className="space-y-10">
         {/* Primera fila: Moneda y Valor del Préstamo */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
