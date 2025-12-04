@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { Select } from "./ui/select";
 import { NumericInput } from "./ui/numeric-input";
+import InfoTooltip from "./ui/info-tooltip";
 import { LoanData } from "@/types/loan";
 
 const currencies = [
@@ -18,7 +19,7 @@ const rateTypes = [
   { value: "nominal", label: "Tasa Nominal" },
 ];
 
-const paymentFrequencies = [
+const frequencies = [
   { value: "mensual", label: "Mensual" },
   { value: "bimestral", label: "Bimestral" },
   { value: "trimestral", label: "Trimestral" },
@@ -32,6 +33,11 @@ const anticipatedOptions = [
   { value: "si", label: "Sí" },
 ];
 
+const annuityOptions = [
+  { value: "amortización", label: "Amortización" },
+  { value: "capitalización", label: "Capitalización" },
+];
+
 export default function LoanForm() {
   const router = useRouter();
   const [formData, setFormData] = useState<LoanData>({
@@ -40,8 +46,10 @@ export default function LoanForm() {
     term: 0,
     interestRate: 0,
     rateType: "efectiva",
+    rateFrequency: "mensual",
     paymentFrequency: "mensual",
     isAnticipated: false,
+    annuityType: "amortización",
   });
 
   // Cargar datos del localStorage al montar el componente
@@ -57,8 +65,13 @@ export default function LoanForm() {
           term: Number(parsedData.term),
           interestRate: Number(parsedData.interestRate) * 100, // Convert back to percentage
           rateType: parsedData.rateType || "efectiva",
+          rateFrequency:
+            parsedData.rateFrequency ||
+            parsedData.paymentFrequency ||
+            "mensual",
           paymentFrequency: parsedData.paymentFrequency || "mensual",
           isAnticipated: parsedData.isAnticipated ?? false,
+          annuityType: parsedData.annuityType || "amortización",
         };
         setFormData(completeLoanData);
       } catch (error) {
@@ -89,6 +102,15 @@ export default function LoanForm() {
     }));
   };
 
+  const handleRateFrequencyChange = (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      rateFrequency: e.target.value as LoanData["rateFrequency"],
+    }));
+  };
+
   const handlePaymentFrequencyChange = (
     e: React.ChangeEvent<HTMLSelectElement>
   ) => {
@@ -104,6 +126,13 @@ export default function LoanForm() {
     setFormData((prev) => ({
       ...prev,
       isAnticipated: e.target.value === "si",
+    }));
+  };
+
+  const handleAnnuityTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormData((prev) => ({
+      ...prev,
+      annuityType: e.target.value as LoanData["annuityType"],
     }));
   };
 
@@ -153,9 +182,9 @@ export default function LoanForm() {
   return (
     <div className="max-w-lg mx-auto pt-8">
       <form onSubmit={handleSubmit} className="space-y-10">
-        {/* Primera fila: Moneda y Valor del Préstamo */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="relative">
+        {/* Primera fila: Tipo de cambio y Valor del préstamo */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 mb-6">
+          <div className="relative md:col-span-1">
             <Select
               id="currency"
               options={currencies}
@@ -163,9 +192,15 @@ export default function LoanForm() {
               onChange={handleCurrencyChange}
               required
             />
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-xs text-gray-500">Tipo de cambio</p>
+              <InfoTooltip content="Moneda en la que se realizará el préstamo">
+                <span></span>
+              </InfoTooltip>
+            </div>
           </div>
 
-          <div className="relative md:col-span-3">
+          <div className="relative md:col-span-2">
             <div className="flex items-baseline space-x-3">
               <span className="text-lg font-bold text-gray-600">$</span>
               <NumericInput
@@ -178,38 +213,55 @@ export default function LoanForm() {
                 allowDecimals={true}
               />
             </div>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-xs text-gray-500">Valor del préstamo</p>
+              <InfoTooltip content="Monto total del préstamo que se solicita">
+                <span></span>
+              </InfoTooltip>
+            </div>
           </div>
         </div>
 
-        {/* Segunda fila: Número de Cuotas y Frecuencia de Pago */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="relative md:col-span-2">
+        {/* Segunda fila: Número de cuotas y Frecuencia de pago final */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 mb-6">
+          <div className="relative md:col-span-1">
             <NumericInput
               id="term"
-              placeholder="¿A cuántas cuotas lo simulamos?"
+              placeholder="12"
               value={formData.term}
               onChange={(value) =>
                 setFormData((prev) => ({ ...prev, term: value }))
               }
               allowDecimals={false}
             />
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-xs text-gray-500">Número de cuotas</p>
+              <InfoTooltip content="Número total de pagos que se realizarán durante la vida del préstamo">
+                <span></span>
+              </InfoTooltip>
+            </div>
           </div>
 
-          <div className="relative">
+          <div className="relative md:col-span-2">
             <Select
               id="paymentFrequency"
-              options={paymentFrequencies}
+              options={frequencies}
               value={formData.paymentFrequency}
               onChange={handlePaymentFrequencyChange}
               required
             />
-            <p className="text-xs text-gray-500 mt-1">Frecuencia de pago</p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-xs text-gray-500">Frecuencia de pago</p>
+              <InfoTooltip content="Periodicidad con la que se realizarán los pagos del préstamo">
+                <span></span>
+              </InfoTooltip>
+            </div>
           </div>
         </div>
 
-        {/* Tercera fila: Tipo de Tasa y Tasa */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="relative md:col-span-2">
+        {/* Tercera fila: Tipo de tasa, Frecuencia inicial y Tasa */}
+        <div className="grid grid-cols-1 md:grid-cols-7 gap-x-8 mb-6">
+          <div className="relative md:col-span-3">
             <Select
               id="rateType"
               options={rateTypes}
@@ -217,12 +269,31 @@ export default function LoanForm() {
               onChange={handleRateTypeChange}
               required
             />
-            <p className="text-xs text-gray-500 mt-1">
-              Tipo de tasa de interés
-            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-xs text-gray-500">Tipo de tasa de interés</p>
+              <InfoTooltip content="Efectiva: tasa real de interés. Nominal: tasa que se anuncia antes de considerar capitalización">
+                <span></span>
+              </InfoTooltip>
+            </div>
           </div>
 
-          <div className="relative">
+          <div className="relative md:col-span-2">
+            <Select
+              id="rateFrequency"
+              options={frequencies}
+              value={formData.rateFrequency}
+              onChange={handleRateFrequencyChange}
+              required
+            />
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-xs text-gray-500">Frecuencia tasa</p>
+              <InfoTooltip content="Periodicidad original de la tasa de interés que posteriormente se transforma a la frecuencia de pago final">
+                <span></span>
+              </InfoTooltip>
+            </div>
+          </div>
+
+          <div className="relative md:col-span-2">
             <div className="flex items-baseline space-x-3">
               <div className="flex-1">
                 <NumericInput
@@ -237,15 +308,20 @@ export default function LoanForm() {
                   showValidationError={true}
                   validationErrorMessage="La tasa de interés no puede ser mayor al 100%"
                 />
-                <p className="text-xs text-gray-500 mt-1">Tasa</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-xs text-gray-500">Tasa</p>
+                  <InfoTooltip content="Porcentaje de interés que se aplicará según el tipo y frecuencia seleccionada">
+                    <span></span>
+                  </InfoTooltip>
+                </div>
               </div>
               <span className="text-lg font-bold text-gray-600">%</span>
             </div>
           </div>
         </div>
 
-        {/* Cuarta fila: Tasa Anticipada */}
-        <div className="grid grid-cols-1 gap-8">
+        {/* Cuarta fila: Tasa anticipada y Anualidad vencida/anticipada */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 mb-6">
           <div className="relative">
             <Select
               id="isAnticipated"
@@ -254,9 +330,30 @@ export default function LoanForm() {
               onChange={handleIsAnticipatedChange}
               required
             />
-            <p className="text-xs text-gray-500 mt-1">
-              ¿La tasa es anticipada?
-            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-xs text-gray-500">¿Tasa anticipada?</p>
+              <InfoTooltip content="Tasa anticipada: el interés se cobra por adelantado. Tasa regular: el interés se cobra al final del período">
+                <span></span>
+              </InfoTooltip>
+            </div>
+          </div>
+
+          <div className="relative md:col-span-2">
+            <Select
+              id="annuityType"
+              options={annuityOptions}
+              value={formData.annuityType}
+              onChange={handleAnnuityTypeChange}
+              required
+            />
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-xs text-gray-500">
+                Amortización o Capitalización
+              </p>
+              <InfoTooltip content="Amortización: se pagan intereses y capital gradualmente reduciendo la deuda. Capitalización: solo se pagan intereses, el capital se mantiene">
+                <span></span>
+              </InfoTooltip>
+            </div>
           </div>
         </div>
 

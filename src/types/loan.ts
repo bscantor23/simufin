@@ -4,14 +4,22 @@ export interface LoanData {
   term: number; // número de cuotas
   interestRate: number; // tasa de interés
   rateType: "efectiva" | "nominal"; // tipo de tasa
+  rateFrequency:
+    | "mensual"
+    | "bimestral"
+    | "trimestral"
+    | "cuatrimestral"
+    | "semestral"
+    | "anual"; // frecuencia de la tasa
   paymentFrequency:
     | "mensual"
     | "bimestral"
     | "trimestral"
     | "cuatrimestral"
     | "semestral"
-    | "anual"; // frecuencia de pago
+    | "anual"; // frecuencia de pago final
   isAnticipated: boolean; // si la tasa es anticipada
+  annuityType: "amortización" | "capitalización"; // tipo de anualidad
 }
 
 export interface PaymentDetail {

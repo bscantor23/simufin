@@ -41,8 +41,10 @@ export default function SimulationPage() {
       const completeLoanData: LoanData = {
         ...loanData,
         rateType: loanData.rateType || "efectiva",
+        rateFrequency: loanData.rateFrequency || loanData.paymentFrequency || "mensual",
         paymentFrequency: loanData.paymentFrequency || "mensual",
         isAnticipated: loanData.isAnticipated ?? false,
+        annuityType: loanData.annuityType || "amortización",
       };
 
       const calculatedSimulation = calculateLoanSimulation(completeLoanData);
