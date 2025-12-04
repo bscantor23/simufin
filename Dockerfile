@@ -35,9 +35,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # For production, consider using a reverse proxy (nginx) or run with --user root
 USER nextjs
 
-EXPOSE 80
+EXPOSE 3000
 
-ENV PORT=80
+ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 CMD ["node", "server.js"]
