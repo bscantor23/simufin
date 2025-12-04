@@ -1,0 +1,63 @@
+name: Deploy Simufin
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deployment'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  deploy:
+    name: Deploy Simufin App
+    runs-on: [simufin]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # --- Stop containers safely ---
+      - name: Stop existing containers
+        run: |
+          docker-compose down || true
+          docker container prune -f || true
+
+      # --- Clean up unused images ---
+      - name: Clean up Docker images
+        run: |
+          docker image prune -f || true
+
+      # --- Build + start ---
+      - name: Build and start Simufin app
+        run: |
+          docker-compose up --build -d
+
+      # --- Wait for app to be ready ---
+      - name: Wait for app to start
+        run: |
+          echo "Waiting for Simufin app to start..."
+          sleep 10
+          # Wait for health check to pass
+          timeout 60 bash -c 'until docker-compose ps | grep "healthy\|running"; do sleep 2; done' || true
+
+      # --- Verify deployment ---
+      - name: Verify deployment
+        run: |
+          echo "===== Container Status ====="
+          docker-compose ps
+          echo "===== Health Check ====="
+          curl -f http://localhost:80 || echo "Health check failed"
+
+      # --- Logs on failure ---
+      - name: Show service logs if failed
+        if: failure()
+        run: |
+          echo "===== Containers ====="
+          docker-compose ps
+          echo "===== App Logs ====="
+          docker-compose logs --tail=100
