@@ -41,6 +41,7 @@ export interface LoanSimulation {
   anticipatedEffectiveRate: number;
   nominalRate: number;
   anticipatedNominalRate: number;
+  paymentFrequency: string; // Frecuencia de las tasas calculadas
   presentValue: number; // Valor presente (P)
   futureValue: number; // Valor futuro (S)
 }

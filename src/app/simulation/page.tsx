@@ -16,8 +16,10 @@ import {
   calculateCompoundInterest,
   getPeriodsPerYear,
   getEffectiveRate,
+  getAllRatesInPaymentFrequency,
   convertEffectiveToNominal,
   convertRegularToAnticipatedRate,
+  convertAnticipatedToRegularRate,
   formatPercentage,
 } from "@/lib/financial-utils";
 import { CurrencyFormatter } from "@/lib/currency-formatter";
@@ -26,6 +28,7 @@ export default function SimulationPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [simulation, setSimulation] = useState<LoanSimulation | null>(null);
+  const [showInputModal, setShowInputModal] = useState(false);
   const [currency, setCurrency] = useState<CurrencyFormatter | null>(null);
 
   useEffect(() => {
@@ -41,15 +44,16 @@ export default function SimulationPage() {
       const completeLoanData: LoanData = {
         ...loanData,
         rateType: loanData.rateType || "efectiva",
-        rateFrequency: loanData.rateFrequency || loanData.paymentFrequency || "mensual",
+        rateFrequency:
+          loanData.rateFrequency || loanData.paymentFrequency || "mensual",
         paymentFrequency: loanData.paymentFrequency || "mensual",
         isAnticipated: loanData.isAnticipated ?? false,
         annuityType: loanData.annuityType || "amortización",
       };
 
       const calculatedSimulation = calculateLoanSimulation(completeLoanData);
-      
-      console.log(calculatedSimulation)
+
+      console.log(calculatedSimulation);
       setSimulation(calculatedSimulation);
       setCurrency(new CurrencyFormatter(loanData.currency));
     } catch (error) {
@@ -67,19 +71,15 @@ export default function SimulationPage() {
       const periods = getPeriodsPerYear(loanData.paymentFrequency);
 
       const effectiveRate = getEffectiveRate(loanData);
-      const anticipatedEffectiveRate =
-        convertRegularToAnticipatedRate(effectiveRate);
-
-      const nominalRate = convertEffectiveToNominal(effectiveRate, periods);
-      const anticipatedNominalRate =
-        convertRegularToAnticipatedRate(nominalRate);
+      const allRates = getAllRatesInPaymentFrequency(loanData);
 
       const payments = generateAmortizationSchedule(effectiveRate, loanData);
 
       const periodicPayment = calculatePeriodicPayment(
         loanData.amount,
         effectiveRate,
-        loanData.term
+        loanData.term,
+        loanData.annuityType
       );
 
       // Calcular totales
@@ -97,10 +97,11 @@ export default function SimulationPage() {
         totalInterest,
         totalAmount,
         payments,
-        effectiveRate,
-        anticipatedEffectiveRate,
-        nominalRate,
-        anticipatedNominalRate,
+        effectiveRate: allRates.effectiveRate,
+        anticipatedEffectiveRate: allRates.anticipatedEffectiveRate,
+        nominalRate: allRates.nominalRate,
+        anticipatedNominalRate: allRates.anticipatedNominalRate,
+        paymentFrequency: allRates.frequency,
         presentValue: presentValue || loanData.amount,
         futureValue: futureValue || totalAmount,
       };
@@ -116,10 +117,55 @@ export default function SimulationPage() {
         anticipatedEffectiveRate: loanData.interestRate || 0,
         nominalRate: loanData.interestRate || 0,
         anticipatedNominalRate: loanData.interestRate || 0,
+        paymentFrequency: loanData.paymentFrequency,
         presentValue: loanData.amount,
         futureValue: loanData.amount,
       };
     }
+  };
+
+  const getFrequencyAbbreviation = (frequency: string): string => {
+    const abbreviations: Record<string, string> = {
+      anual: "A",
+      mensual: "M",
+      bimestral: "B",
+      trimestral: "T",
+      cuatrimestral: "C",
+      semestral: "S",
+    };
+    return abbreviations[frequency] || "A";
+  };
+
+  const getFrequencyFullName = (frequency: string): string => {
+    const fullNames: Record<string, string> = {
+      anual: "Anual",
+      mensual: "Mensual",
+      bimestral: "Bimestral",
+      trimestral: "Trimestral",
+      cuatrimestral: "Cuatrimestral",
+      semestral: "Semestral",
+    };
+    return fullNames[frequency] || "Anual";
+  };
+
+  const generateRateConversionText = (simulation: LoanSimulation): string => {
+    const inputRate = formatPercentage(simulation.loanData.interestRate);
+
+    const inputRateTypeFullName =
+      simulation.loanData.rateType === "nominal" ? "Nominal" : "Efectiva";
+    const inputFreqFullName = getFrequencyFullName(
+      simulation.loanData.rateFrequency || "anual"
+    );
+    const anticipatedText = simulation.loanData.isAnticipated
+      ? " Anticipada"
+      : "";
+
+    const outputRate = formatPercentage(simulation.effectiveRate);
+    const outputFreqFullName = getFrequencyFullName(
+      simulation.loanData.paymentFrequency || "mensual"
+    );
+
+    return `${inputRate} ${inputRateTypeFullName} ${inputFreqFullName} ${anticipatedText},  ${outputRate} Efectiva ${outputFreqFullName}`;
   };
 
   const handleBackToForm = () => {
@@ -158,9 +204,104 @@ export default function SimulationPage() {
 
   return (
     <div
-      className="min-h-screen font-roboto relative"
+      className="min-h-screen font-roboto relatives"
       style={{ backgroundColor: "#f5f5f5" }}
     >
+      {/* Panel Lateral de Información de Entrada */}
+      {showInputModal && (
+        <div className="fixed left-4 top-24 bg-white rounded-lg shadow-lg border border-gray-200 mt-2 p-4 z-30 w-72 max-h-screen overflow-y-auto">
+          {/* Header con botón cerrar */}
+          <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-800">
+              Información de Entrada
+            </h3>
+            <button
+              onClick={() => setShowInputModal(false)}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          {/* Contenido - Cada dato en una fila */}
+          <div className="space-y-3">
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Moneda</p>
+              <p className="text-base font-bold text-yellow-600 capitalize">
+                {simulation.loanData.currency || "peso"}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Valor del Préstamo</p>
+              <p className="text-base font-bold text-yellow-600">
+                {currency?.format(simulation.loanData.amount)}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Número de Cuotas</p>
+              <p className="text-base font-bold text-yellow-600">
+                {simulation.loanData.term}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Frecuencia de Pago</p>
+              <p className="text-base font-bold text-yellow-600 capitalize">
+                {simulation.loanData.paymentFrequency || "mensual"}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Tipo de Tasa</p>
+              <p className="text-base font-bold text-yellow-600 capitalize">
+                {simulation.loanData.rateType || "efectiva"}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Frecuencia Inicial</p>
+              <p className="text-base font-bold text-yellow-600 capitalize">
+                {simulation.loanData.rateFrequency || "anual"}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Tasa Ingresada</p>
+              <p className="text-base font-bold text-yellow-600">
+                {formatPercentage(simulation.loanData.interestRate)}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-600 mb-1">¿Tasa Anticipada?</p>
+              <p className="text-base font-bold text-yellow-600">
+                {simulation.loanData.isAnticipated ? "Sí" : "No"}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Tipo de Anualidad</p>
+              <p className="text-base font-bold text-yellow-600 capitalize">
+                {simulation.loanData.annuityType || "amortización"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Navbar */}
       <nav
         className="bg-white shadow-lg relative z-10"
@@ -205,6 +346,43 @@ export default function SimulationPage() {
             <h2 className="text-2xl font-bold text-gray-900">
               Resultado de la Simulación
             </h2>
+          </div>
+
+          {/* Botón para mostrar información de entrada y conversión de tasas */}
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <button
+              onClick={() => setShowInputModal(true)}
+              className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition-colors flex items-center"
+            >
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              Ver Información de Entrada
+            </button>
+
+            {/* Conversión de tasas - Al final de la fila */}
+            <div className="text-sm text-gray-700 font-medium flex items-center gap-1">
+              {formatPercentage(simulation.loanData.interestRate)}
+              {simulation.loanData.rateType === "nominal" ? "N" : "E"}
+              {getFrequencyAbbreviation(simulation.loanData.rateFrequency)}
+              {simulation.loanData.isAnticipated ? " (Anticipada)" : ""}
+              {" => "}
+              {formatPercentage(simulation.effectiveRate)}E
+              {getFrequencyAbbreviation(simulation.loanData.paymentFrequency)}
+              <InfoTooltip content={generateRateConversionText(simulation)}>
+                <span></span>
+              </InfoTooltip>
+            </div>
           </div>
 
           {/* Resumen del préstamo */}
@@ -282,11 +460,13 @@ export default function SimulationPage() {
                   <>
                     {/* Campo 1: Tasa Efectiva */}
                     <div className="text-center">
-                      <p className="text-sm text-gray-600">Tasa Efectiva</p>
+                      <p className="text-sm text-gray-600">
+                        Tasa Efectiva {simulation.loanData.paymentFrequency}
+                      </p>
                       <p className="text-lg font-bold text-yellow-600">
                         {formatPercentage(simulation.effectiveRate)}
                       </p>
-                      <InfoTooltip content="Tasa efectiva">
+                      <InfoTooltip content="Tasa efectiva en la frecuencia de pago">
                         <div className="flex justify-center">
                           <span></span>
                         </div>
@@ -310,11 +490,13 @@ export default function SimulationPage() {
 
                     {/* Campo 3: Tasa Nominal */}
                     <div className="text-center">
-                      <p className="text-sm text-gray-600">Tasa Nominal</p>
+                      <p className="text-sm text-gray-600">
+                        Tasa Nominal {simulation.loanData.paymentFrequency}
+                      </p>
                       <p className="text-lg font-bold text-teal-600">
                         {formatPercentage(simulation.nominalRate)}
                       </p>
-                      <InfoTooltip content="Tasa nominal">
+                      <InfoTooltip content="Tasa nominal en la frecuencia de pago">
                         <div className="flex justify-center mt-1">
                           <span></span>
                         </div>
@@ -329,12 +511,13 @@ export default function SimulationPage() {
                     {/* Campo 1: Tasa Efectiva Anticipada */}
                     <div className="text-center">
                       <p className="text-sm text-gray-600">
-                        Tasa Efectiva Anticipada
+                        Tasa Efectiva Anticipada{" "}
+                        {simulation.loanData.paymentFrequency}
                       </p>
                       <p className="text-lg font-bold text-red-600">
                         {formatPercentage(simulation.anticipatedEffectiveRate)}
                       </p>
-                      <InfoTooltip content="Tasa efectiva anticipada">
+                      <InfoTooltip content="Tasa efectiva anticipada en la frecuencia de pago">
                         <div className="flex justify-center mt-1">
                           <span></span>
                         </div>
@@ -343,11 +526,13 @@ export default function SimulationPage() {
 
                     {/* Campo 2: Tasa Efectiva Regular */}
                     <div className="text-center">
-                      <p className="text-sm text-gray-600">Tasa Efectiva</p>
+                      <p className="text-sm text-gray-600">
+                        Tasa Efectiva {simulation.loanData.paymentFrequency}
+                      </p>
                       <p className="text-lg font-bold text-yellow-600">
                         {formatPercentage(simulation.effectiveRate)}
                       </p>
-                      <InfoTooltip content="Tasa efectiva regular">
+                      <InfoTooltip content="Tasa efectiva regular en la frecuencia de pago">
                         <div className="flex justify-center">
                           <span></span>
                         </div>
@@ -371,11 +556,13 @@ export default function SimulationPage() {
 
                     {/* Campo 4: Tasa Nominal Regular */}
                     <div className="text-center">
-                      <p className="text-sm text-gray-600">Tasa Nominal</p>
+                      <p className="text-sm text-gray-600">
+                        Tasa Nominal {simulation.loanData.paymentFrequency}
+                      </p>
                       <p className="text-lg font-bold text-teal-600">
                         {formatPercentage(simulation.nominalRate)}
                       </p>
-                      <InfoTooltip content="Tasa nominal regular">
+                      <InfoTooltip content="Tasa nominal regular en la frecuencia de pago">
                         <div className="flex justify-center mt-1">
                           <span></span>
                         </div>
@@ -385,12 +572,13 @@ export default function SimulationPage() {
                     {/* Campo 5: Tasa Nominal Anticipada */}
                     <div className="text-center">
                       <p className="text-sm text-gray-600">
-                        Tasa Nominal Anticipada
+                        Tasa Nominal Anticipada{" "}
+                        {simulation.loanData.paymentFrequency}
                       </p>
                       <p className="text-lg font-bold text-cyan-600">
                         {formatPercentage(simulation.anticipatedNominalRate)}
                       </p>
-                      <InfoTooltip content="Tasa nominal anticipada">
+                      <InfoTooltip content="Tasa nominal anticipada en la frecuencia de pago">
                         <div className="flex justify-center mt-1">
                           <span></span>
                         </div>

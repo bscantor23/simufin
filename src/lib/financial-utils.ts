@@ -67,43 +67,152 @@ export function convertRegularToAnticipatedRate(regularRate: number): number {
   return round(regularRate / (1 + regularRate), 6);
 }
 
-// Función principal para obtener la tasa por periodo (tasa efectiva regular)
-export function getEffectiveRate(loanData: LoanData): number {
-  const periodsPerYear = getPeriodsPerYear(loanData.paymentFrequency);
-  let effectiveRate: number;
-
-  if (loanData.rateType === "nominal") {
-    effectiveRate = convertNominalToEffective(
-      loanData.interestRate,
-      periodsPerYear
-    );
-  } else {
-    effectiveRate = loanData.interestRate;
+// Función para convertir una tasa efectiva de una frecuencia a otra
+// Usando la fórmula: (1 + i1)^(m1) = (1 + i2)^(m2)
+// donde i1 es la tasa origen, i2 es la tasa destino, m1 y m2 son las frecuencias
+export function convertEffectiveRateFrequency(
+  effectiveRate: number,
+  fromFrequency: LoanData["paymentFrequency"],
+  toFrequency: LoanData["paymentFrequency"]
+): number {
+  if (fromFrequency === toFrequency) {
+    return effectiveRate;
   }
 
-  if (loanData.isAnticipated) {
-    if (loanData.rateType === "efectiva") {
-      effectiveRate = convertAnticipatedToRegularRate(loanData.interestRate);
-    } else {
-      effectiveRate = convertNominalToEffective(
-        convertAnticipatedToRegularRate(loanData.interestRate),
-        periodsPerYear
-      );
-    }
-  }
-  return effectiveRate;
+  const fromPeriods = getPeriodsPerYear(fromFrequency);
+  const toPeriods = getPeriodsPerYear(toFrequency);
+
+  // Convertir a tasa anual efectiva
+  const annualEffectiveRate = Math.pow(1 + effectiveRate, fromPeriods) - 1;
+  
+  // Convertir a la nueva frecuencia
+  const newEffectiveRate = Math.pow(1 + annualEffectiveRate, 1 / toPeriods) - 1;
+  
+  return round(newEffectiveRate, 6);
 }
 
-// Calcular el pago mensual usando la fórmula de anualidades
+export function getEffectiveRate(loanData: LoanData): number {
+  const rateFrequencyPeriods = getPeriodsPerYear(loanData.rateFrequency);
+  const paymentFrequencyPeriods = getPeriodsPerYear(loanData.paymentFrequency);
+  
+  let workingRate = loanData.interestRate;
+  
+  // ESCENARIO 1: Tasa Nominal Anticipada
+  if (loanData.rateType === "nominal" && loanData.isAnticipated) {
+    // 1. Calcular tasa nominal regular
+    const nominalRegular = convertAnticipatedToRegularRate(workingRate);
+    
+    // 2. Calcular tasa efectiva en frecuencia original
+    const effectiveOriginal = convertNominalToEffective(nominalRegular, rateFrequencyPeriods);
+    
+    // 3. Si las frecuencias son distintas, hacer cambio de frecuencias
+    let effectiveFinal = effectiveOriginal;
+    if (loanData.rateFrequency !== loanData.paymentFrequency) {
+      effectiveFinal = convertEffectiveRateFrequency(
+        effectiveOriginal,
+        loanData.rateFrequency,
+        loanData.paymentFrequency
+      );
+    }
+    
+    return effectiveFinal;
+  }
+  
+  // ESCENARIO 2: Tasa Nominal Regular
+  else if (loanData.rateType === "nominal" && !loanData.isAnticipated) {
+    // 1. Calcular tasa efectiva en frecuencia original
+    const effectiveOriginal = convertNominalToEffective(workingRate, rateFrequencyPeriods);
+    
+    // 2. Si las frecuencias son distintas, hacer cambio de frecuencias
+    let effectiveFinal = effectiveOriginal;
+    if (loanData.rateFrequency !== loanData.paymentFrequency) {
+      effectiveFinal = convertEffectiveRateFrequency(
+        effectiveOriginal,
+        loanData.rateFrequency,
+        loanData.paymentFrequency
+      );
+    }
+    
+    return effectiveFinal;
+  }
+  
+  // ESCENARIO 3: Tasa Efectiva Anticipada
+  else if (loanData.rateType === "efectiva" && loanData.isAnticipated) {
+    // 1. Calcular tasa efectiva regular
+    const effectiveRegular = convertAnticipatedToRegularRate(workingRate);
+    
+    // 2. Si las frecuencias son distintas, hacer cambio de frecuencias
+    let effectiveFinal = effectiveRegular;
+    if (loanData.rateFrequency !== loanData.paymentFrequency) {
+      effectiveFinal = convertEffectiveRateFrequency(
+        effectiveRegular,
+        loanData.rateFrequency,
+        loanData.paymentFrequency
+      );
+    }
+    
+    return effectiveFinal;
+  }
+  
+  // ESCENARIO 4: Tasa Efectiva Regular
+  else {
+    // 1. Si las frecuencias son distintas, hacer cambio de frecuencias
+    let effectiveFinal = workingRate;
+    if (loanData.rateFrequency !== loanData.paymentFrequency) {
+      effectiveFinal = convertEffectiveRateFrequency(
+        workingRate,
+        loanData.rateFrequency,
+        loanData.paymentFrequency
+      );
+    }
+    
+    return effectiveFinal;
+  }
+}
+
+// Función para obtener todas las tasas equivalentes en la frecuencia de pago
+export function getAllRatesInPaymentFrequency(loanData: LoanData) {
+  const effectiveRatePaymentFreq = getEffectiveRate(loanData);
+  const paymentFrequencyPeriods = getPeriodsPerYear(loanData.paymentFrequency);
+  
+  // Calcular tasa nominal: j = i × m (tasa efectiva por períodos por año)
+  const nominalRatePaymentFreq = effectiveRatePaymentFreq * paymentFrequencyPeriods;
+  
+  // Calcular tasa anticipada efectiva en frecuencia de pago
+  const anticipatedEffectivePaymentFreq = convertRegularToAnticipatedRate(effectiveRatePaymentFreq);
+  
+  // Calcular tasa anticipada nominal: j = i × m (tasa anticipada efectiva por períodos por año)  
+  const anticipatedNominalPaymentFreq = anticipatedEffectivePaymentFreq * paymentFrequencyPeriods;
+  
+  return {
+    effectiveRate: effectiveRatePaymentFreq,
+    nominalRate: nominalRatePaymentFreq,
+    anticipatedEffectiveRate: anticipatedEffectivePaymentFreq,
+    anticipatedNominalRate: anticipatedNominalPaymentFreq,
+    frequency: loanData.paymentFrequency
+  };
+}
+
+// Calcular el pago periódico considerando amortización o capitalización
 export function calculatePeriodicPayment(
   principal: number,
   periodicRate: number,
-  numberOfPeriods: number
+  numberOfPeriods: number,
+  annuityType: "amortización" | "capitalización" = "amortización"
 ): number {
   if (periodicRate === 0) {
+    if (annuityType === "capitalización") {
+      return 0; // Solo intereses, pero sin tasa no hay pago
+    }
     return principal / numberOfPeriods;
   }
 
+  if (annuityType === "capitalización") {
+    // Solo pagar intereses, el capital se mantiene
+    return principal * periodicRate;
+  }
+
+  // Amortización: fórmula tradicional de anualidades
   return (
     (principal * periodicRate * Math.pow(1 + periodicRate, numberOfPeriods)) /
     (Math.pow(1 + periodicRate, numberOfPeriods) - 1)
@@ -118,7 +227,7 @@ export function calculateCompoundInterest(
   return loanData.amount * Math.pow(1 + effectiveRate, loanData.term);
 }
 
-// Generar la tabla de amortización
+// Generar la tabla de amortización o capitalización
 export function generateAmortizationSchedule(
   effectiveRate: number,
   loanData: LoanData
@@ -126,7 +235,8 @@ export function generateAmortizationSchedule(
   const periodicPayment = calculatePeriodicPayment(
     loanData.amount,
     effectiveRate,
-    loanData.term
+    loanData.term,
+    loanData.annuityType
   );
 
   const payments: PaymentDetail[] = [];
@@ -160,14 +270,33 @@ export function generateAmortizationSchedule(
 
   for (let i = 1; i <= loanData.term; i++) {
     const interestPayment = remainingBalance * effectiveRate;
-    let principalPayment = periodicPayment - interestPayment;
+    let principalPayment: number;
+    let totalPayment: number;
 
-    // En el último pago, ajustar para que el saldo sea exactamente 0
-    if (i === loanData.term) {
-      principalPayment = remainingBalance;
+    if (loanData.annuityType === "capitalización") {
+      // En capitalización, solo se pagan intereses
+      principalPayment = 0;
+      totalPayment = interestPayment;
+      
+      // En el último pago de capitalización, también se paga el capital
+      if (i === loanData.term) {
+        principalPayment = remainingBalance;
+        totalPayment = interestPayment + principalPayment;
+        remainingBalance = 0;
+      }
+    } else {
+      // Amortización normal
+      principalPayment = periodicPayment - interestPayment;
+      totalPayment = periodicPayment;
+      
+      // En el último pago, ajustar para que el saldo sea exactamente 0
+      if (i === loanData.term) {
+        principalPayment = remainingBalance;
+        totalPayment = principalPayment + interestPayment;
+      }
+      
+      remainingBalance -= principalPayment;
     }
-
-    remainingBalance -= principalPayment;
 
     // Calcular la fecha de pago
     const paymentDate = new Date(startDate);
@@ -180,7 +309,7 @@ export function generateAmortizationSchedule(
       paymentDate: paymentDate.toISOString(),
       principalPayment,
       interestPayment,
-      totalPayment: principalPayment + interestPayment,
+      totalPayment,
       remainingBalance: Math.max(0, remainingBalance),
     });
   }
