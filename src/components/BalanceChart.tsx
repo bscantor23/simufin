@@ -35,12 +35,14 @@ interface BalanceChartProps {
     | "cuatrimestral"
     | "semestral"
     | "anual";
+  readonly annuityType?: "amortización" | "capitalización";
 }
 
 export default function BalanceChart({
   payments,
   currency,
   paymentFrequency = "mensual",
+  annuityType = "amortización",
 }: BalanceChartProps) {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("es-CO", {
@@ -55,7 +57,7 @@ export default function BalanceChart({
     labels: payments.map((p) => p.paymentNumber),
     datasets: [
       {
-        label: "Saldo Pendiente",
+        label: annuityType === "capitalización" ? "Saldo Actual" : "Saldo Pendiente",
         data: payments.map((p) => p.remainingBalance),
         borderColor: "rgb(59, 130, 246)",
         backgroundColor: "rgba(59, 130, 246, 0.1)",
@@ -96,6 +98,23 @@ export default function BalanceChart({
         pointBorderColor: "white",
         pointBorderWidth: 2,
         pointRadius: 4,
+      },
+      {
+        label: "Intereses Acumulados",
+        data: payments.map((p, index) => {
+          return payments
+            .slice(0, index + 1)
+            .reduce((sum, payment) => sum + payment.interestPayment, 0);
+        }),
+        borderColor: "rgb(220, 38, 127)",
+        backgroundColor: "rgba(220, 38, 127, 0.1)",
+        borderWidth: 2,
+        fill: false,
+        tension: 0.1,
+        pointBackgroundColor: "rgb(220, 38, 127)",
+        pointBorderColor: "white",
+        pointBorderWidth: 2,
+        pointRadius: 3,
       },
     ],
   };
@@ -193,6 +212,10 @@ export default function BalanceChart({
     (sum, payment) => sum + payment.totalPayment,
     0
   );
+  const totalIntereses = payments.reduce(
+    (sum, payment) => sum + payment.interestPayment,
+    0
+  );
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
@@ -201,7 +224,7 @@ export default function BalanceChart({
       </div>
 
       {/* Resumen con el mismo formato que compound interest */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-4 border-t border-gray-200">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-4 border-t border-gray-200">
         <div className="text-center">
           <p className="text-sm text-gray-600">Valor Cuota</p>
           <p className="text-lg font-bold text-green-600">
@@ -212,6 +235,12 @@ export default function BalanceChart({
           <p className="text-sm text-gray-600">Total Pagado</p>
           <p className="text-lg font-bold text-orange-600">
             {formatCurrency(totalPagado)}
+          </p>
+        </div>
+        <div className="text-center">
+          <p className="text-sm text-gray-600">Total Intereses</p>
+          <p className="text-lg font-bold text-pink-600">
+            {formatCurrency(totalIntereses)}
           </p>
         </div>
       </div>

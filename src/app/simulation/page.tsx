@@ -24,6 +24,190 @@ import {
 } from "@/lib/financial-utils";
 import { CurrencyFormatter } from "@/lib/currency-formatter";
 
+// Componente interno para tabla resumen de pagos
+interface PaymentSummaryTableInternalProps {
+  readonly payments: any[];
+  readonly currency: CurrencyFormatter;
+  readonly annuityType: 'amortización' | 'capitalización';
+  readonly initialAmount: number;
+}
+
+function PaymentSummaryTableInternal({ payments, currency, annuityType, initialAmount }: PaymentSummaryTableInternalProps) {
+  const [isCollapsed, setIsCollapsed] = useState(true);
+
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
+  // Crear array con período 0 + todos los pagos (solo período 0 para amortización)
+  const allRows = [
+    ...(annuityType === 'amortización' ? [{
+      paymentNumber: 0,
+      remainingBalance: initialAmount,
+      interestPayment: 0,
+      totalPayment: 0,
+      principalPayment: 0,
+      isInitial: true
+    }] : []),
+    ...payments.map(payment => ({ ...payment, isInitial: false }))
+  ];
+
+  return (
+    <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+      {/* Header colapsable */}
+      <button
+        onClick={toggleCollapse}
+        className="w-full flex justify-between items-center text-left focus:outline-none hover:bg-gray-50 p-2 rounded"
+      >
+        <h3 className="text-xl font-semibold text-gray-800">
+          Tabla Resumen de Pagos
+        </h3>
+        <svg
+          className={`w-5 h-5 text-gray-500 transform transition-transform ${
+            isCollapsed ? '' : 'rotate-180'
+          }`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </button>
+
+      {/* Contenido de la tabla */}
+      {!isCollapsed && (
+        <div className="mt-4">
+          <div className="overflow-x-auto max-h-96 overflow-y-auto border rounded-lg">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50 sticky top-0">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Periodo
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Saldo
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Interés
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Cuota
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {annuityType === 'amortización' ? 'Amortización' : 'Incremento'}
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {allRows.map((row, index) => {
+                  if (row.isInitial) {
+                    // Período 0 - solo mostrar saldo inicial
+                    return (
+                      <tr key={0} className="bg-blue-50 hover:bg-blue-100">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-900">
+                          0
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-900">
+                          {currency.format(row.remainingBalance)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          -
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          -
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          -
+                        </td>
+                      </tr>
+                    );
+                  }
+
+                  // Períodos normales
+                  const payment = row;
+                  // Para capitalización, mostrar el incremento (cuota + interés)
+                  // Para amortización, mostrar amortización de capital
+                  const valorMostrar = annuityType === 'capitalización' 
+                    ? payment.principalPayment + payment.interestPayment // En capitalización, incremento = cuota + interés
+                    : payment.principalPayment; // En amortización, es el capital que se paga
+
+                  return (
+                    <tr key={payment.paymentNumber} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {payment.paymentNumber}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {currency.format(
+                          annuityType === 'capitalización' 
+                            ? payment.remainingBalance // En capitalización, mostrar el saldo final (después del incremento)
+                            : payment.remainingBalance + payment.principalPayment // En amortización, saldo al inicio del período
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {currency.format(payment.interestPayment)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {currency.format(payment.totalPayment)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {currency.format(valorMostrar)}
+                      </td>
+                    </tr>
+                  );
+                })}
+                
+                {/* Fila de totales */}
+                <tr className="bg-gray-100 border-t-2 border-gray-300 font-bold">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                    TOTAL
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                    {currency.format(
+                      annuityType === 'capitalización' 
+                        ? payments[payments.length - 1]?.remainingBalance || 0 // Saldo final acumulado
+                        : initialAmount // Monto inicial del préstamo
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                    {currency.format(
+                      payments.reduce((sum, payment) => sum + payment.interestPayment, 0)
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                    {currency.format(
+                      payments.reduce((sum, payment) => sum + payment.totalPayment, 0)
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                    {currency.format(
+                      annuityType === 'capitalización' 
+                        ? payments.reduce((sum, payment) => sum + payment.principalPayment + payment.interestPayment, 0) // Total incrementos
+                        : payments.reduce((sum, payment) => sum + payment.principalPayment, 0) // Total amortización
+                    )}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          {/* Información adicional */}
+          <div className="mt-4 p-3 bg-gray-50 rounded-md">
+            <p className="text-sm text-gray-600">
+              <strong>Total de períodos:</strong> {payments.length} | 
+              <strong className="ml-2">Tipo de anualidad:</strong> {annuityType}
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function SimulationPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -606,12 +790,22 @@ export default function SimulationPage() {
                   payments={simulation.payments}
                   currency={simulation.loanData.currency}
                   paymentFrequency={simulation.loanData.paymentFrequency}
+                  annuityType={simulation.loanData.annuityType as 'amortización' | 'capitalización'}
                 />
               </div>
             </div>
 
             {/* Segunda fila: Detalle de pagos */}
-            <div>
+            <div className="space-y-8">
+              {/* Tabla resumen de pagos */}
+              <PaymentSummaryTableInternal
+                payments={simulation.payments}
+                currency={currency as CurrencyFormatter}
+                annuityType={simulation.loanData.annuityType as 'amortización' | 'capitalización'}
+                initialAmount={simulation.loanData.amount}
+              />
+
+              {/* Vista detallada por años */}
               <PaymentDetailView
                 payments={simulation.payments}
                 currency={currency as CurrencyFormatter}

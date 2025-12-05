@@ -208,8 +208,9 @@ export function calculatePeriodicPayment(
   }
 
   if (annuityType === "capitalización") {
-    // Solo pagar intereses, el capital se mantiene
-    return principal * periodicRate;
+    // Capitalización: C = S × i / [(1 + i)^n - 1]
+    // donde S es el valor futuro que queremos alcanzar (principal en este contexto)
+    return (principal * periodicRate) / (Math.pow(1 + periodicRate, numberOfPeriods) - 1);
   }
 
   // Amortización: fórmula tradicional de anualidades
@@ -268,24 +269,30 @@ export function generateAmortizationSchedule(
     }
   };
 
+  // Para capitalización, inicializamos el saldo acumulado en 0
+  if (loanData.annuityType === "capitalización") {
+    remainingBalance = 0;
+  }
+
   for (let i = 1; i <= loanData.term; i++) {
-    const interestPayment = remainingBalance * effectiveRate;
+    let interestPayment: number;
     let principalPayment: number;
     let totalPayment: number;
 
     if (loanData.annuityType === "capitalización") {
-      // En capitalización, solo se pagan intereses
-      principalPayment = 0;
-      totalPayment = interestPayment;
+      // Capitalización de anualidades (ahorros)
+      // Los intereses se calculan sobre el saldo acumulado del período anterior
+      interestPayment = remainingBalance * effectiveRate;
+      principalPayment = periodicPayment; // El depósito
+      totalPayment = periodicPayment;
       
-      // En el último pago de capitalización, también se paga el capital
-      if (i === loanData.term) {
-        principalPayment = remainingBalance;
-        totalPayment = interestPayment + principalPayment;
-        remainingBalance = 0;
-      }
+      // El incremento es cuota + intereses
+      const incremento = principalPayment + interestPayment;
+      // El nuevo saldo es saldo anterior + incremento
+      remainingBalance = remainingBalance + incremento;
     } else {
       // Amortización normal
+      interestPayment = remainingBalance * effectiveRate;
       principalPayment = periodicPayment - interestPayment;
       totalPayment = periodicPayment;
       
