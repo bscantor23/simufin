@@ -123,7 +123,7 @@ export default function CompoundInterestChart({
     ],
   };
 
-  const options = {
+  const options: any = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -136,13 +136,7 @@ export default function CompoundInterestChart({
         },
       },
       title: {
-        display: true,
-        text: "Evolución Interés Compuesto - Valor Futuro",
-        font: {
-          size: window.innerWidth < 640 ? 14 : 18,
-          weight: "bold" as const,
-        },
-        color: "#374151",
+        display: false,
         padding: {
           top: 10,
           bottom: window.innerWidth < 640 ? 20 : 30,
@@ -150,16 +144,23 @@ export default function CompoundInterestChart({
       },
       tooltip: {
         callbacks: {
-          label: function (context: any) {
+          label: (context: any) => {
+            const format = (amount: number) => new Intl.NumberFormat("es-CO", {
+              style: "currency",
+              currency,
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 3,
+            }).format(amount);
+            
             const datasetLabel = context.dataset.label;
-            const value = formatCurrency(context.parsed.y);
+            const value = format(context.parsed.y);
             const period = context.dataIndex;
 
-            if (datasetLabel === "Valor con Interés Compuesto (S)") {
+            if (datasetLabel === "Valor acumulado") {
               const periodData = compoundData[period];
               return [
                 `${datasetLabel}: ${value}`,
-                `Interés del periodo: ${formatCurrency(periodData.interest)}`,
+                `Interés del periodo: ${format(periodData.interest)}`,
                 `Fórmula: ${loanData.amount.toLocaleString("es-CO")} × (1 + ${(
                   getEffectiveRate(loanData) * 100
                 ).toFixed(3)}%)^${period}`,
@@ -177,7 +178,7 @@ export default function CompoundInterestChart({
           display: true,
           text: "Periodos",
           font: {
-            weight: "bold" as const,
+            weight: "bold",
           },
         },
         grid: {
@@ -188,13 +189,16 @@ export default function CompoundInterestChart({
         title: {
           display: true,
           font: {
-            weight: "bold" as const,
+            weight: "bold",
           },
         },
         ticks: {
-          callback: function (value: any) {
-            return formatCurrency(value);
-          },
+          callback: (value: any) => new Intl.NumberFormat("es-CO", {
+            style: "currency",
+            currency,
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 3,
+          }).format(value),
         },
         grid: {
           color: "rgba(0, 0, 0, 0.1)",
@@ -212,6 +216,29 @@ export default function CompoundInterestChart({
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+      {/* Título personalizado con tooltip */}
+      <div className="flex items-center justify-center gap-2 mb-4">
+        <h3 className="text-lg font-bold text-gray-700">
+          Evolución Interés Compuesto - Valor Futuro
+        </h3>
+        <div className="relative group">
+          <svg
+            className="w-5 h-5 text-gray-400 hover:text-gray-600 cursor-help"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
+              clipRule="evenodd"
+            />
+          </svg>
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+            Cálculo de intereses y valor final sin abonos durante el plazo
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+          </div>
+        </div>
+      </div>
       <div className="h-64 sm:h-80 md:h-96 mb-6">
         <Line data={chartData} options={options} />
       </div>

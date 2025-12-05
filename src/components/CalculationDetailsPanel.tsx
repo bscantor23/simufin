@@ -32,11 +32,34 @@ export default function CalculationDetailsPanel({
 
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const quotaExplanation = `
-Cálculo de la Cuota (C)
+  const quotaExplanation = simulation.loanData.annuityType === "capitalización" 
+    ? `
+Cálculo de la Cuota (C) - Capitalización
 ==================================================
 
-Fórmula de Cuota:
+Fórmula de Anualidad Vencida (Capitalización):
+C = S × i / [(1 + i)^n - 1]
+
+= ${presentValue} × ${effectiveRate} / [(1 + ${effectiveRate})^${term} - 1]
+
+Donde:
+  S = Valor Futuro que se desea alcanzar
+  S = ${presentValue}
+  i = Tasa de Interés Efectiva por Periodo
+  i = ${formatPercentage(effectiveRate)}
+  n = Número de Periodos
+  n = ${term}
+
+Nota: Anualidad vencida - Los pagos se realizan al final de cada período
+
+Resultado:
+  Cuota = ${periodicPayment}
+  `.trim()
+    : `
+Cálculo de la Cuota (C) - Amortización
+==================================================
+
+Fórmula de Anualidad Anticipada (Amortización):
 C = P × [i × (1 + i)^n] / [(1 + i)^n - 1]
 
 = ${presentValue} × [${effectiveRate} × (1 + ${effectiveRate})^${term}] / [(1 + ${effectiveRate})^${term} - 1]
@@ -48,6 +71,8 @@ Donde:
   i = ${formatPercentage(effectiveRate)}
   n = Número de Periodos
   n = ${term}
+
+Nota: Anualidad anticipada - Los pagos se realizan al inicio de cada período
 
 Resultado:
   Cuota = ${periodicPayment}
