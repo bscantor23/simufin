@@ -306,7 +306,25 @@ export function generateAmortizationSchedule(
       // El incremento es cuota + intereses
       const incremento = principalPayment + interestPayment;
       // El nuevo saldo es saldo anterior + incremento
-      remainingBalance = remainingBalance + incremento;
+      const newRemainingBalance = remainingBalance + incremento;
+      
+      // Calcular la fecha de pago
+      const paymentDate = new Date(startDate);
+      paymentDate.setDate(
+        paymentDate.getDate() + getDaysToAdd(loanData.paymentFrequency, i)
+      );
+
+      payments.push({
+        paymentNumber: i,
+        paymentDate: paymentDate.toISOString(),
+        principalPayment,
+        interestPayment,
+        totalPayment,
+        remainingBalance: newRemainingBalance,
+      });
+      
+      // Actualizar el saldo para el siguiente período
+      remainingBalance = newRemainingBalance;
     } else {
       // Amortización normal
       interestPayment = remainingBalance * effectiveRate;
@@ -319,23 +337,27 @@ export function generateAmortizationSchedule(
         totalPayment = principalPayment + interestPayment;
       }
       
-      remainingBalance -= principalPayment;
+      // Calcular el nuevo saldo DESPUÉS del pago (saldo inicial - amortización)
+      const newRemainingBalance = i === loanData.term ? 0 : Math.max(0, remainingBalance - principalPayment);
+      
+      // Calcular la fecha de pago
+      const paymentDate = new Date(startDate);
+      paymentDate.setDate(
+        paymentDate.getDate() + getDaysToAdd(loanData.paymentFrequency, i)
+      );
+
+      payments.push({
+        paymentNumber: i,
+        paymentDate: paymentDate.toISOString(),
+        principalPayment,
+        interestPayment,
+        totalPayment,
+        remainingBalance: Math.max(0, newRemainingBalance),
+      });
+      
+      // Actualizar el saldo para el siguiente período
+      remainingBalance = newRemainingBalance;
     }
-
-    // Calcular la fecha de pago
-    const paymentDate = new Date(startDate);
-    paymentDate.setDate(
-      paymentDate.getDate() + getDaysToAdd(loanData.paymentFrequency, i)
-    );
-
-    payments.push({
-      paymentNumber: i,
-      paymentDate: paymentDate.toISOString(),
-      principalPayment,
-      interestPayment,
-      totalPayment,
-      remainingBalance: Math.max(0, remainingBalance),
-    });
   }
 
   return payments;

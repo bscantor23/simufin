@@ -156,12 +156,7 @@ function PaymentSummaryTableInternal({
                         {payment.paymentNumber}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {currency.format(
-                          annuityType === "capitalización"
-                            ? payment.remainingBalance // En capitalización, mostrar el saldo final (después del incremento)
-                            : payment.remainingBalance +
-                                payment.principalPayment // En amortización, saldo al inicio del período
-                        )}
+                        {currency.format(payment.remainingBalance)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {currency.format(payment.interestPayment)}
