@@ -99,11 +99,11 @@ export function getEffectiveRate(loanData: LoanData): number {
   
   // ESCENARIO 1: Tasa Nominal Anticipada
   if (loanData.rateType === "nominal" && loanData.isAnticipated) {
-    // 1. Calcular tasa nominal regular
-    const nominalRegular = convertAnticipatedToRegularRate(workingRate);
+    // 1. La tasa nominal ya está en la frecuencia correcta, es efectiva anticipada directamente
+    const anticipatedEffective = workingRate; // Ya es efectiva anticipada en su frecuencia
     
-    // 2. Calcular tasa efectiva en frecuencia original
-    const effectiveOriginal = convertNominalToEffective(nominalRegular, rateFrequencyPeriods);
+    // 2. Convertir tasa efectiva anticipada a efectiva regular: i = ia / (1 - ia)
+    const effectiveOriginal = convertAnticipatedToRegularRate(anticipatedEffective);
     
     // 3. Si las frecuencias son distintas, hacer cambio de frecuencias
     let effectiveFinal = effectiveOriginal;
@@ -198,7 +198,8 @@ export function calculatePeriodicPayment(
   principal: number,
   periodicRate: number,
   numberOfPeriods: number,
-  annuityType: "amortización" | "capitalización" = "amortización"
+  annuityType: "amortización" | "capitalización" = "amortización",
+  annuityTiming: "vencida" | "anticipada" = "vencida"
 ): number {
   if (periodicRate === 0) {
     if (annuityType === "capitalización") {
@@ -207,17 +208,32 @@ export function calculatePeriodicPayment(
     return principal / numberOfPeriods;
   }
 
+  let payment: number;
+
   if (annuityType === "capitalización") {
     // Capitalización: C = S × i / [(1 + i)^n - 1]
     // donde S es el valor futuro que queremos alcanzar (principal en este contexto)
-    return (principal * periodicRate) / (Math.pow(1 + periodicRate, numberOfPeriods) - 1);
+    payment = (principal * periodicRate) / (Math.pow(1 + periodicRate, numberOfPeriods) - 1);
+  } else {
+    // Amortización: fórmula tradicional de anualidades vencidas
+    payment = (
+      (principal * periodicRate * Math.pow(1 + periodicRate, numberOfPeriods)) /
+      (Math.pow(1 + periodicRate, numberOfPeriods) - 1)
+    );
   }
 
-  // Amortización: fórmula tradicional de anualidades
-  return (
-    (principal * periodicRate * Math.pow(1 + periodicRate, numberOfPeriods)) /
-    (Math.pow(1 + periodicRate, numberOfPeriods) - 1)
-  );
+  // Si es anualidad anticipada, ajustar según el tipo
+  if (annuityTiming === "anticipada") {
+    if (annuityType === "capitalización") {
+      // Capitalización anticipada: divide por (1 + i)
+      payment = payment / (1 + periodicRate);
+    } else {
+      // Amortización anticipada: divide por (1 + i)
+      payment = payment / (1 + periodicRate);
+    }
+  }
+
+  return payment;
 }
 
 // Calcular valor futuro con interés compuesto: S = P(1 + i)^n
@@ -237,7 +253,8 @@ export function generateAmortizationSchedule(
     loanData.amount,
     effectiveRate,
     loanData.term,
-    loanData.annuityType
+    loanData.annuityType,
+    loanData.annuityTiming
   );
 
   const payments: PaymentDetail[] = [];

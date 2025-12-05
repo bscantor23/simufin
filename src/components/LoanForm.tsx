@@ -38,6 +38,11 @@ const annuityOptions = [
   { value: "capitalización", label: "Capitalización" },
 ];
 
+const annuityTimingOptions = [
+  { value: "vencida", label: "Vencida" },
+  { value: "anticipada", label: "Anticipada" },
+];
+
 export default function LoanForm() {
   const router = useRouter();
   const [formData, setFormData] = useState<LoanData>({
@@ -50,6 +55,7 @@ export default function LoanForm() {
     paymentFrequency: "mensual",
     isAnticipated: false,
     annuityType: "amortización",
+    annuityTiming: "vencida",
   });
 
   // Cargar datos del localStorage al montar el componente
@@ -72,6 +78,7 @@ export default function LoanForm() {
           paymentFrequency: parsedData.paymentFrequency || "mensual",
           isAnticipated: parsedData.isAnticipated ?? false,
           annuityType: parsedData.annuityType || "amortización",
+          annuityTiming: parsedData.annuityTiming || "vencida",
         };
         setFormData(completeLoanData);
       } catch (error) {
@@ -133,6 +140,13 @@ export default function LoanForm() {
     setFormData((prev) => ({
       ...prev,
       annuityType: e.target.value as LoanData["annuityType"],
+    }));
+  };
+
+  const handleAnnuityTimingChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormData((prev) => ({
+      ...prev,
+      annuityTiming: e.target.value as LoanData["annuityTiming"],
     }));
   };
 
@@ -320,7 +334,7 @@ export default function LoanForm() {
           </div>
         </div>
 
-        {/* Cuarta fila: Tasa anticipada y Anualidad vencida/anticipada */}
+        {/* Cuarta fila: Tasa anticipada y Tipo de anualidad */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 mb-6">
           <div className="relative">
             <Select
@@ -338,7 +352,7 @@ export default function LoanForm() {
             </div>
           </div>
 
-          <div className="relative md:col-span-2">
+          <div className="relative">
             <Select
               id="annuityType"
               options={annuityOptions}
@@ -348,9 +362,27 @@ export default function LoanForm() {
             />
             <div className="flex items-center gap-2 mt-1">
               <p className="text-xs text-gray-500">
-                Amortización o Capitalización
+                Modalidad
               </p>
               <InfoTooltip content="Amortización: se pagan intereses y capital gradualmente reduciendo la deuda. Capitalización: solo se pagan intereses, el capital se mantiene">
+                <span></span>
+              </InfoTooltip>
+            </div>
+          </div>
+
+          <div className="relative">
+            <Select
+              id="annuityTiming"
+              options={annuityTimingOptions}
+              value={formData.annuityTiming}
+              onChange={handleAnnuityTimingChange}
+              required
+            />
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-xs text-gray-500">
+                Momento de pago
+              </p>
+              <InfoTooltip content="Vencida: pagos al final del período. Anticipada: pagos al inicio del período">
                 <span></span>
               </InfoTooltip>
             </div>

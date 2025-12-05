@@ -32,15 +32,23 @@ export default function CalculationDetailsPanel({
 
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const { annuityTiming } = simulation.loanData;
+  
   const quotaExplanation = simulation.loanData.annuityType === "capitalización" 
     ? `
 Cálculo de la Cuota (C) - Capitalización
 ==================================================
 
-Fórmula de Anualidad Vencida (Capitalización):
-C = S × i / [(1 + i)^n - 1]
+Fórmula de Anualidad ${annuityTiming === "vencida" ? "Vencida" : "Anticipada"} (Capitalización):
+${annuityTiming === "vencida" 
+  ? "C = S × i / [(1 + i)^n - 1]"
+  : "C = [S × i / [(1 + i)^n - 1]] / (1 + i)"
+}
 
-= ${presentValue} × ${effectiveRate} / [(1 + ${effectiveRate})^${term} - 1]
+${annuityTiming === "vencida"
+  ? `= ${presentValue} × ${effectiveRate} / [(1 + ${effectiveRate})^${term} - 1]`
+  : `= [${presentValue} × ${effectiveRate} / [(1 + ${effectiveRate})^${term} - 1]] / (1 + ${effectiveRate})`
+}
 
 Donde:
   S = Valor Futuro que se desea alcanzar
@@ -50,7 +58,7 @@ Donde:
   n = Número de Periodos
   n = ${term}
 
-Nota: Anualidad vencida - Los pagos se realizan al final de cada período
+Nota: Anualidad ${annuityTiming} - Los pagos se realizan al ${annuityTiming === "vencida" ? "final" : "inicio"} de cada período
 
 Resultado:
   Cuota = ${periodicPayment}
@@ -59,10 +67,16 @@ Resultado:
 Cálculo de la Cuota (C) - Amortización
 ==================================================
 
-Fórmula de Anualidad Anticipada (Amortización):
-C = P × [i × (1 + i)^n] / [(1 + i)^n - 1]
+Fórmula de Anualidad ${annuityTiming === "vencida" ? "Vencida" : "Anticipada"} (Amortización):
+${annuityTiming === "vencida" 
+  ? "C = P × [i × (1 + i)^n] / [(1 + i)^n - 1]"
+  : "C = [P × [i × (1 + i)^n] / [(1 + i)^n - 1]] / (1 + i)"
+}
 
-= ${presentValue} × [${effectiveRate} × (1 + ${effectiveRate})^${term}] / [(1 + ${effectiveRate})^${term} - 1]
+${annuityTiming === "vencida"
+  ? `= ${presentValue} × [${effectiveRate} × (1 + ${effectiveRate})^${term}] / [(1 + ${effectiveRate})^${term} - 1]`
+  : `= [${presentValue} × [${effectiveRate} × (1 + ${effectiveRate})^${term}] / [(1 + ${effectiveRate})^${term} - 1]] / (1 + ${effectiveRate})`
+}
 
 Donde:
   P = Valor Presente (Monto del Préstamo)
@@ -72,14 +86,14 @@ Donde:
   n = Número de Periodos
   n = ${term}
 
-Nota: Anualidad anticipada - Los pagos se realizan al inicio de cada período
+Nota: Anualidad ${annuityTiming} - Los pagos se realizan al ${annuityTiming === "vencida" ? "final" : "inicio"} de cada período
 
 Resultado:
   Cuota = ${periodicPayment}
   `.trim();
 
   const futureValueExplanation = `
-Cálculo del Valor Futuro (S)
+Cálculo del Valor Futuro sin Abonos
 ==================================================
 
 Fórmula de Interés Compuesto: 
@@ -108,44 +122,39 @@ ${
     ? `La tasa efectiva fue ingresada directamente por el usuario:
 
 Tasa Efectiva por Periodo = ${formatPercentage(interestRate)}`
-    : ""
-}${`La tasa efectiva se puede calcular a partir de la tasa nominal:
+    : rateType === "nominal" && !isAnticipated
+    ? `La tasa efectiva se calcula a partir de la tasa nominal:
 
 Fórmula de Tasa Efectiva por Periodo: 
 i = j / m
 
-= ${interestRate} / ${paymentFrequency}
+= ${formatPercentage(interestRate)} / ${paymentFrequency}
 
 Donde: 
-  j = Tasa Nominal
+  j = Tasa Nominal Anual
   j = ${formatPercentage(interestRate)}
   m = Número de periodos en un año
   m = ${paymentFrequency}
 
 Resultado:
-  i = ${formatPercentage(effectiveRate)}
+  i = ${formatPercentage(effectiveRate)}`
+    : isAnticipated
+    ? `La tasa efectiva se calcula a partir de la tasa anticipada efectiva:
 
-------------------------------------------------
-
-`}${
-    isAnticipated
-      ? `La tasa efectiva se puede calcular a partir de la tasa anticipada efectiva:
-
-Fórmula de la Tasa Efectiva por Periodo: 
+Fórmula de conversión: 
 i = ia / (1 - ia)
 
-= ${anticipatedEffectiveRate} / (1 - ${anticipatedEffectiveRate})
+= ${formatPercentage(anticipatedEffectiveRate)} / (1 - ${formatPercentage(anticipatedEffectiveRate)})
 
 Donde: 
-  i = Tasa Efectiva
-  ia = Tasa Anticipada Efectiva
+  i = Tasa Efectiva por Periodo
+  ia = Tasa Anticipada Efectiva por Periodo
   ia = ${formatPercentage(anticipatedEffectiveRate)}
 
 Resultado:
-  i = ${formatPercentage(effectiveRate)}
-`
-      : ""
-  }`.trim();
+  i = ${formatPercentage(effectiveRate)}`
+    : ""
+}`.trim();
 
   const nominalRateExplanation = `
 Cálculo de la Tasa Nominal ${paymentFrequencyName}
@@ -155,45 +164,43 @@ ${
   rateType === "nominal" && !isAnticipated
     ? `La tasa nominal fue ingresada directamente por el usuario:
 
-Tasa Nominal por Periodo = ${formatPercentage(interestRate)}`
-    : ""
-}${`La tasa nominal se calcula a partir de la tasa efectiva:
-     
+Tasa Nominal Anual = ${formatPercentage(interestRate)}
+Tasa Nominal por Periodo = ${formatPercentage(nominalRate)}`
+    : rateType === "efectiva" && !isAnticipated
+    ? `La tasa nominal se calcula a partir de la tasa efectiva:
+
 Fórmula de Tasa Nominal por Periodo: 
 j = i × m
 
-= ${interestRate} × ${paymentFrequency}
+= ${formatPercentage(effectiveRate)} × ${paymentFrequency}
 
 Donde: 
-  i = Tasa Efectiva
-  i = ${formatPercentage(interestRate)}%
+  i = Tasa Efectiva por Periodo
+  i = ${formatPercentage(effectiveRate)}
   m = Número de periodos en un año
   m = ${paymentFrequency}
 
 Resultado:
-  j = ${formatPercentage(nominalRate)}
+  j = ${formatPercentage(nominalRate)}`
+    : isAnticipated
+    ? `La tasa nominal se calcula a partir de la tasa efectiva:
 
-------------------------------------------------
+Fórmula de Tasa Nominal por Periodo: 
+j = i × m
 
-`}${
-    isAnticipated
-      ? `La tasa nominal se calcula a partir de la tasa nominal efectiva:
-
-Fórmula de la Tasa Nominal por Periodo: 
-j = ja / (1 - ja)
-
-= ${anticipatedNominalRate} / (1 - ${anticipatedNominalRate})
+= ${formatPercentage(effectiveRate)} × ${paymentFrequency}
 
 Donde: 
-  j = Tasa Nominal
-  ja = Tasa Anticipada Nominal
-  ja = ${formatPercentage(anticipatedNominalRate)}
+  j = Tasa Nominal por Periodo
+  i = Tasa Efectiva por Periodo
+  i = ${formatPercentage(effectiveRate)}
+  m = Número de períodos en un año
+  m = ${paymentFrequency}
 
 Resultado:
-  j = ${formatPercentage(nominalRate)}
-`
-      : ""
-  }`.trim();
+  j = ${formatPercentage(nominalRate)}`
+    : ""
+}`.trim();
 
   const anticipatedEffectiveRateExplanation = `
 Cálculo de la Tasa Anticipada Efectiva ${paymentFrequencyName}
@@ -203,27 +210,26 @@ ${
   rateType === "efectiva" && isAnticipated
     ? `La tasa anticipada efectiva fue ingresada directamente por el usuario:
 
-Tasa Anticipada Efectiva por Periodo = ${formatPercentage(interestRate)}`
-    : ""
-}${
-    rateType === "nominal" && isAnticipated
-      ? `La tasa anticipada efectiva se calcula a partir de la tasa efectiva:
+Tasa Anticipada Efectiva Anual = ${formatPercentage(interestRate)}
+Tasa Anticipada Efectiva por Periodo = ${formatPercentage(anticipatedEffectiveRate)}`
+    : rateType === "nominal" && isAnticipated
+    ? `La tasa anticipada efectiva se calcula a partir de la tasa nominal anticipada:
 
-Fórmula de la Tasa Anticipada Efectiva por Periodo: 
-ia = i / (1 + i)
+Primero se convierte la tasa nominal anticipada a efectiva anticipada por periodo:
+ia = ja / m
 
-= ${effectiveRate} / (1 + ${effectiveRate})
+= ${formatPercentage(interestRate)} / ${paymentFrequency}
 
-Donde: 
-  ia = Tasa Anticipada Efectiva
-  i = Tasa Efectiva
-  i = ${formatPercentage(effectiveRate)}
+Donde:
+  ja = Tasa Nominal Anticipada Anual
+  ja = ${formatPercentage(interestRate)}
+  m = Número de períodos en un año
+  m = ${paymentFrequency}
 
 Resultado:
-  ia = ${formatPercentage(anticipatedEffectiveRate)}
-`
+  ia = ${formatPercentage(anticipatedEffectiveRate)}`
       : ""
-  }`.trim();
+}`.trim();
 
   const anticipatedNominalRateExplanation = `
 Cálculo de la Tasa Anticipada Nominal ${paymentFrequencyName}
@@ -233,27 +239,27 @@ ${
   rateType === "nominal" && isAnticipated
     ? `La tasa anticipada nominal fue ingresada directamente por el usuario:
 
-Tasa Anticipada Nominal por Periodo = ${formatPercentage(interestRate)}`
-    : ""
-}${
-    rateType === "efectiva" && isAnticipated
-      ? `La tasa anticipada nominal se calcula a partir de la tasa nominal:
+Tasa Anticipada Nominal Anual = ${formatPercentage(interestRate)}
+Tasa Anticipada Nominal por Periodo = ${formatPercentage(anticipatedNominalRate)}`
+    : rateType === "efectiva" && isAnticipated
+    ? `La tasa anticipada nominal se calcula a partir de la tasa anticipada efectiva:
 
 Fórmula de la Tasa Anticipada Nominal por Periodo: 
-ja = j / (1 + i)
+ja = ia × m
 
-= ${nominalRate} / (1 + ${nominalRate})
+= ${formatPercentage(anticipatedEffectiveRate)} × ${paymentFrequency}
 
 Donde: 
-  ja = Tasa Anticipada Nominal
-  j = Tasa Nominal
-  j = ${formatPercentage(nominalRate)}
+  ja = Tasa Anticipada Nominal por Periodo
+  ia = Tasa Anticipada Efectiva por Periodo
+  ia = ${formatPercentage(anticipatedEffectiveRate)}
+  m = Número de períodos en un año
+  m = ${paymentFrequency}
 
 Resultado:
-  ja = ${formatPercentage(anticipatedNominalRate)}
-`
+  ja = ${formatPercentage(anticipatedNominalRate)}`
       : ""
-  }`.trim();
+}`.trim();
 
   return (
     <>

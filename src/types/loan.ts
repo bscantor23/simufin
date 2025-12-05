@@ -20,6 +20,7 @@ export interface LoanData {
     | "anual"; // frecuencia de pago final
   isAnticipated: boolean; // si la tasa es anticipada
   annuityType: "amortización" | "capitalización"; // tipo de anualidad
+  annuityTiming: "vencida" | "anticipada"; // si la anualidad es vencida o anticipada
 }
 
 export interface PaymentDetail {
@@ -43,5 +44,5 @@ export interface LoanSimulation {
   anticipatedNominalRate: number;
   paymentFrequency: string; // Frecuencia de las tasas calculadas
   presentValue: number; // Valor presente (P)
-  futureValue: number; // Valor futuro (S)
+  futureValue: number; // Valor futuro sin Abonos
 }

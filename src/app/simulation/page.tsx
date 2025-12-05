@@ -27,6 +27,7 @@ interface PaymentSummaryTableInternalProps {
   readonly currency: CurrencyFormatter;
   readonly annuityType: "amortización" | "capitalización";
   readonly initialAmount: number;
+  readonly annuityTiming: "vencida" | "anticipada";
 }
 
 function PaymentSummaryTableInternal({
@@ -34,6 +35,7 @@ function PaymentSummaryTableInternal({
   currency,
   annuityType,
   initialAmount,
+  annuityTiming,
 }: PaymentSummaryTableInternalProps) {
   const [isCollapsed, setIsCollapsed] = useState(true);
 
@@ -227,14 +229,12 @@ function PaymentSummaryTableInternal({
           <div className="mt-4 p-3 bg-gray-50 rounded-md">
             <p className="text-sm text-gray-600">
               <strong>Total de períodos:</strong> {payments.length} |
-              <strong className="ml-2">Tipo de anualidad:</strong>{" "}
-              {annuityType === "capitalización"
-                ? "Anualidad Vencida"
-                : "Anualidad Anticipada"}{" "}
-              |<strong className="ml-2">Modalidad:</strong>{" "}
+              <strong className="ml-2">Modalidad:</strong>{" "}
               {annuityType === "capitalización"
                 ? "Capitalización"
-                : "Amortización"}
+                : "Amortización"} |
+              <strong className="ml-2">Anualidad:</strong>{" "}
+              {annuityTiming === "vencida" ? "Vencida" : "Anticipada"}
             </p>
           </div>
         </div>
@@ -298,7 +298,8 @@ export default function SimulationPage() {
         loanData.amount,
         effectiveRate,
         loanData.term,
-        loanData.annuityType
+        loanData.annuityType,
+        loanData.annuityTiming
       );
 
       // Calcular totales
@@ -492,7 +493,9 @@ export default function SimulationPage() {
             </div>
 
             <div>
-              <p className="text-sm text-gray-600 mb-1">Frecuencia Inicial</p>
+              <p className="text-sm text-gray-600 mb-1">
+                Frecuencia de la Tasa
+              </p>
               <p className="text-base font-bold text-yellow-600 capitalize">
                 {simulation.loanData.rateFrequency || "anual"}
               </p>
@@ -513,9 +516,18 @@ export default function SimulationPage() {
             </div>
 
             <div>
-              <p className="text-sm text-gray-600 mb-1">Tipo de Anualidad</p>
+              <p className="text-sm text-gray-600 mb-1">Modalidad</p>
               <p className="text-base font-bold text-yellow-600 capitalize">
                 {simulation.loanData.annuityType || "amortización"}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-600 mb-1">
+                ¿Vencida o Anticipada?
+              </p>
+              <p className="text-base font-bold text-yellow-600 capitalize">
+                {simulation.loanData.annuityTiming || "vencida"}
               </p>
             </div>
           </div>
@@ -653,7 +665,7 @@ export default function SimulationPage() {
                 </InfoTooltip>
               </div>
               <div className="text-center">
-                <p className="text-sm text-gray-600">Valor Futuro (S)</p>
+                <p className="text-sm text-gray-600">Valor Futuro sin Abonos</p>
                 <p className="text-lg font-bold text-purple-600">
                   {currency?.format(simulation.futureValue)}
                 </p>
@@ -671,10 +683,10 @@ export default function SimulationPage() {
                 className={`grid gap-6 ${
                   simulation.loanData.isAnticipated
                     ? "md:grid-cols-5"
-                    : "md:grid-cols-3"
+                    : "md:grid-cols-4"
                 }`}
               >
-                {/* Si NO es anticipado: mostrar solo tasa efectiva, frecuencia de pago y tasa nominal */}
+                {/* Si NO es anticipado: mostrar tasa efectiva, frecuencia de pago, tasa nominal y tipo de tasa */}
                 {!simulation.loanData.isAnticipated && (
                   <>
                     {/* Campo 1: Tasa Efectiva */}
@@ -721,10 +733,31 @@ export default function SimulationPage() {
                         </div>
                       </InfoTooltip>
                     </div>
+
+                    {/* Campo 4: Tipo de Tasa */}
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600">Tipo de Tasa</p>
+                      <p className="text-lg font-bold text-purple-600 capitalize">
+                        {simulation.loanData.isAnticipated
+                          ? "Anticipada"
+                          : "Vencida"}
+                      </p>
+                      <InfoTooltip
+                        content={
+                          simulation.loanData.isAnticipated
+                            ? "Los intereses se calculan y pagan al inicio del período"
+                            : "Los intereses se calculan y pagan al final del período"
+                        }
+                      >
+                        <div className="flex justify-center mt-1">
+                          <span></span>
+                        </div>
+                      </InfoTooltip>
+                    </div>
                   </>
                 )}
 
-                {/* Si ES anticipado: mostrar tasa efectiva anticipada, tasa efectiva, frecuencia de pago, tasa nominal, tasa nominal anticipada */}
+                {/* Si ES anticipado: mostrar tasa efectiva anticipada, tasa efectiva, frecuencia de pago, tasa nominal, tasa nominal anticipada, tipo de tasa */}
                 {simulation.loanData.isAnticipated && (
                   <>
                     {/* Campo 1: Tasa Efectiva Anticipada */}
@@ -846,6 +879,7 @@ export default function SimulationPage() {
                     | "capitalización"
                 }
                 initialAmount={simulation.loanData.amount}
+                annuityTiming={simulation.loanData.annuityTiming || "vencida"}
               />
 
               {/* Vista detallada por años */}
