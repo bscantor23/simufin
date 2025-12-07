@@ -37,11 +37,6 @@ function PaymentSummaryTableInternal({
   initialAmount,
   annuityTiming,
 }: PaymentSummaryTableInternalProps) {
-  const [isCollapsed, setIsCollapsed] = useState(true);
-
-  const toggleCollapse = () => {
-    setIsCollapsed(!isCollapsed);
-  };
 
   // Crear array con período 0 + todos los pagos (solo período 0 para amortización)
   const allRows = [
@@ -62,34 +57,15 @@ function PaymentSummaryTableInternal({
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-      {/* Header colapsable */}
-      <button
-        onClick={toggleCollapse}
-        className="w-full flex justify-between items-center text-left focus:outline-none hover:bg-gray-50 p-2 rounded"
-      >
+      {/* Header fijo */}
+      <div className="mb-4">
         <h3 className="text-xl font-semibold text-gray-800">
           Tabla Resumen de Pagos
         </h3>
-        <svg
-          className={`w-5 h-5 text-gray-500 transform transition-transform ${
-            isCollapsed ? "" : "rotate-180"
-          }`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 9l-7 7-7-7"
-          />
-        </svg>
-      </button>
+      </div>
 
       {/* Contenido de la tabla */}
-      {!isCollapsed && (
-        <div className="mt-4">
+      <div className="mt-4">
           <div className="overflow-x-auto max-h-96 overflow-y-auto border rounded-lg">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50 sticky top-0">
@@ -232,8 +208,7 @@ function PaymentSummaryTableInternal({
               {annuityTiming === "vencida" ? "Vencida" : "Anticipada"}
             </p>
           </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
