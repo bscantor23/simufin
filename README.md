@@ -1,217 +1,192 @@
-# SimuFin - Simulador Financiero
+# SimuFin - Financial Simulator
 
 ![SimuFin Logo](https://img.shields.io/badge/SimuFin-Financial%20Simulator-blue?style=for-the-badge)
 
-Un simulador financiero avanzado para cálculos de préstamos y amortizaciones, desarrollado con Next.js 16 y TypeScript. Permite realizar simulaciones precisas de préstamos con diferentes tipos de tasas, modalidades de pago y visualizaciones interactivas.
+An advanced financial simulator for loan and amortization calculations, developed with Next.js 16 and TypeScript. It allows for precise loan simulations with different types of rates, payment modalities, and interactive visualizations.
 
-## 🚀 Características Principales
+![SimuFin Screenshot 1](public/simufin_0.png)
 
-### 📊 Cálculos Financieros Avanzados
-- **Amortización y Capitalización**: Soporte completo para ambos tipos de cálculo
-- **Tasas Múltiples**: Manejo de tasas nominales y efectivas con diferentes frecuencias
-- **Modalidades de Pago**: Anualidades vencidas y anticipadas
-- **Conversión de Tasas**: Conversión automática entre diferentes tipos y frecuencias de tasas
+## Key Features
 
-### 📈 Visualizaciones Interactivas
-- **Gráfico de Balance**: Evolución del saldo del préstamo a lo largo del tiempo
-- **Gráfico de Interés Compuesto**: Visualización del crecimiento de intereses
-- **Gráfico de Pagos**: Distribución entre capital e intereses por período
-- **Tooltips Informativos**: Explicaciones detalladas con iconos SVG personalizados
+### Advanced Financial Calculations
+- **Amortization and Capitalization**: Full support for both types of calculations
+- **Multiple Rates**: Handling of nominal and effective rates with different frequencies
+- **Payment Modalities**: Ordinary and due annuities
+- **Rate Conversion**: Automatic conversion between different types and frequencies of rates
 
-### 📋 Tablas y Reportes Detallados
-- **Tabla de Pagos Completa**: Período 0 incluido con detalles de cada pago
-- **Resumen Colapsible**: Vista condensada con totales y estadísticas
-- **Panel de Detalles**: Explicaciones paso a paso de los cálculos realizados
-- **Información Contextual**: Display dinámico del tipo de tasa y modalidad
+### Interactive Visualizations
+- **Balance Chart**: Evolution of the loan balance over time
+- **Compound Interest Chart**: Visualization of interest growth
+- **Payment Chart**: Distribution between principal and interest per period
+- **Informative Tooltips**: Detailed explanations with custom SVG icons
 
-### 🎨 Interfaz de Usuario Moderna
-- **Diseño Responsivo**: Adaptación automática a diferentes tamaños de pantalla
-- **Componentes Reutilizables**: UI consistente con Tailwind CSS
-- **Animaciones SVG**: Footer interactivo con efectos visuales
-- **Posicionamiento Inteligente**: Adaptación automática según el espacio disponible
+![SimuFin Screenshot 2](public/simufin_1.png)
 
-## 🛠️ Tecnologías Utilizadas
+### Detailed Tables and Reports
+- **Complete Payment Table**: Period 0 included with details of each payment
+- **Collapsible Summary**: Condensed view with totals and statistics
+- **Details Panel**: Step-by-step explanations of the calculations performed
+- **Contextual Information**: Dynamic display of rate type and modality
 
-- **Frontend**: Next.js 16 con Turbopack
-- **Lenguaje**: TypeScript con tipado estricto
-- **Estilos**: Tailwind CSS
-- **Gráficos**: Chart.js con React-Chartjs-2
-- **Íconos**: Lucide React
-- **Linting**: ESLint con configuración moderna
+### Modern User Interface
+- **Responsive Design**: Automatic adaptation to different screen sizes
+- **Reusable Components**: Consistent UI with Tailwind CSS
+- **SVG Animations**: Interactive footer with visual effects
+- **Smart Positioning**: Automatic adaptation based on available space
 
-## 📂 Estructura del Proyecto
+![SimuFin Screenshot 3](public/simufin_2.png)
+![SimuFin Screenshot 3](public/simufin_3.png)
+
+## Technologies Used
+
+- **Frontend**: Next.js 16 with Turbopack
+- **Language**: TypeScript with strict typing
+- **Styles**: Tailwind CSS
+- **Graphics**: Chart.js with React-Chartjs-2
+- **Icons**: Lucide React
+- **Linting**: ESLint with modern configuration
+
+## Project Structure
 
 ```
 simufin/
 ├── src/
-│   ├── app/                    # App Router de Next.js
-│   │   ├── page.tsx           # Página principal
-│   │   ├── layout.tsx         # Layout global
-│   │   ├── globals.css        # Estilos globales
+│   ├── app/                    # Next.js App Router
+│   │   ├── page.tsx           # Main page
+│   │   ├── layout.tsx         # Global layout
+│   │   ├── globals.css        # Global styles
 │   │   └── simulation/
-│   │       └── page.tsx       # Página de resultados
-│   ├── components/            # Componentes React
-│   │   ├── BalanceChart.tsx          # Gráfico de balance
-│   │   ├── CompoundInterestChart.tsx # Gráfico de interés compuesto
-│   │   ├── PaymentChart.tsx          # Gráfico de pagos
-│   │   ├── PaymentTable.tsx          # Tabla de pagos detallada
-│   │   ├── PaymentDetailView.tsx     # Vista de detalles de pago
-│   │   ├── LoanForm.tsx              # Formulario principal
-│   │   ├── CalculationDetailsPanel.tsx # Panel de explicaciones
-│   │   └── ui/                       # Componentes UI base
+│   │       └── page.tsx       # Results page
+│   ├── components/            # React components
+│   │   ├── BalanceChart.tsx          # Balance chart
+│   │   ├── CompoundInterestChart.tsx # Compound interest chart
+│   │   ├── PaymentChart.tsx          # Payment chart
+│   │   ├── PaymentTable.tsx          # Detailed payment table
+│   │   ├── PaymentDetailView.tsx     # Payment details view
+│   │   ├── LoanForm.tsx              # Main form
+│   │   ├── CalculationDetailsPanel.tsx # Explanations panel
+│   │   └── ui/                       # Base UI components
 │   │       ├── button.tsx
 │   │       ├── input.tsx
 │   │       ├── select.tsx
 │   │       ├── numeric-input.tsx
 │   │       ├── info-tooltip.tsx
 │   │       └── spiral-footer.tsx
-│   ├── lib/                   # Utilidades y helpers
-│   │   ├── financial-utils.ts # Funciones financieras core
-│   │   └── currency-formatter.ts # Formateo de moneda
-│   └── types/                 # Definiciones de tipos
-│       └── loan.ts           # Interfaces del préstamo
-├── public/                    # Archivos estáticos
-├── docker-compose.yml         # Configuración Docker
-├── Dockerfile                 # Imagen Docker
-└── package.json              # Dependencias del proyecto
+│   ├── lib/                   # Utilities and helpers
+│   │   ├── financial-utils.ts # Core financial functions
+│   │   └── currency-formatter.ts # Currency formatting
+│   └── types/                 # Type definitions
+│       └── loan.ts           # Loan interfaces
+├── public/                    # Static files
+├── docker-compose.yml         # Docker configuration
+├── Dockerfile                 # Docker image
+└── package.json              # Project dependencies
 ```
 
-## 🔧 Instalación y Configuración
+## Installation and Configuration
 
-### Prerrequisitos
-- Node.js 18+ 
-- npm o yarn
-- Docker (opcional)
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+- Docker (optional)
 
-### Instalación Local
+### Local Installation
 
 ```bash
-# Clonar el repositorio
+# Clone the repository
 git clone https://github.com/bscantor23/simufin.git
 cd simufin
 
-# Instalar dependencias
+# Install dependencies
 npm install
 
-# Ejecutar en modo desarrollo
+# Run in development mode
 npm run dev
 
-# Abrir en el navegador
+# Open in browser
 # http://localhost:3000
 ```
 
 ### Docker
 
 ```bash
-# Construir y ejecutar con Docker Compose
+# Build and run with Docker Compose
 docker-compose up --build
 
-# Acceder en http://localhost:3000
+# Access at http://localhost:3000
 ```
 
-## 📖 Guía de Uso
+## Usage Guide
 
-### 1. Configuración del Préstamo
-- **Monto**: Capital inicial del préstamo
-- **Tasa de Interés**: Valor numérico de la tasa
-- **Tipo de Tasa**: Nominal o Efectiva
-- **Frecuencia de la Tasa**: Anual, Semestral, Bimestral, Mensual
-- **Modalidad**: Vencida o Anticipada
-- **Número de Períodos**: Duración del préstamo
-- **Tipo de Cálculo**: Amortización o Capitalización
+### 1. Loan Configuration
+- **Amount**: Initial loan capital
+- **Interest Rate**: Numeric value of the rate
+- **Rate Type**: Nominal or Effective
+- **Rate Frequency**: Annual, Semiannual, Bimonthly, Monthly
+- **Modality**: Ordinary or Due
+- **Number of Periods**: Loan duration
+- **Calculation Type**: Amortization or Capitalization
 
-### 2. Visualización de Resultados
-- **Gráficos Interactivos**: Hover para ver detalles específicos
-- **Tabla Detallada**: Expandir para ver todos los períodos
-- **Panel de Cálculos**: Explicaciones matemáticas paso a paso
+### 2. Results Visualization
+- **Interactive Charts**: Hover to see specific details
+- **Detailed Table**: Expand to view all periods
+- **Calculations Panel**: Step-by-step mathematical explanations
 
-### 3. Interpretación de Datos
-- **Amortización**: Pago gradual del capital prestado
-- **Capitalización**: Acumulación de intereses sobre el capital
-- **Período 0**: Estado inicial antes del primer pago
-- **Totales**: Suma de todos los pagos realizados
+### 3. Data Interpretation
+- **Amortization**: Gradual repayment of the borrowed capital
+- **Capitalization**: Accumulation of interest on the capital
+- **Period 0**: Initial state before the first payment
+- **Totals**: Sum of all payments made
 
-## 🧮 Fórmulas Implementadas
+## Implemented Formulas
 
-### Pago Periódico
-- **Amortización Vencida**: `C = [S × i × (1 + i)^n] / [(1 + i)^n - 1]`
-- **Amortización Anticipada**: `C = [S × i × (1 + i)^n] / [(1 + i)^n - 1] / (1 + i)`
-- **Capitalización Vencida**: `C = [S × i] / [(1 + i)^n - 1]`
-- **Capitalización Anticipada**: `C = [S × i] / [(1 + i)^n - 1] / (1 + i)`
+### Periodic Payment
+- **Ordinary Amortization**: `C = [S × i × (1 + i)^n] / [(1 + i)^n - 1]`
+- **Due Amortization**: `C = [S × i × (1 + i)^n] / [(1 + i)^n - 1] / (1 + i)`
+- **Ordinary Capitalization**: `C = [S × i] / [(1 + i)^n - 1]`
+- **Due Capitalization**: `C = [S × i] / [(1 + i)^n - 1] / (1 + i)`
 
-### Conversión de Tasas
-- **Nominal a Efectiva**: `i_efectiva = (1 + i_nominal/m)^m - 1`
-- **Efectiva a Nominal**: `i_nominal = m × [(1 + i_efectiva)^(1/m) - 1]`
-- **Cambio de Frecuencia**: `i_nueva = (1 + i_actual)^(f_nueva/f_actual) - 1`
+### Rate Conversion
+- **Nominal to Effective**: `i_effective = (1 + i_nominal/m)^m - 1`
+- **Effective to Nominal**: `i_nominal = m × [(1 + i_effective)^(1/m) - 1]`
+- **Frequency Change**: `i_new = (1 + i_current)^(f_new/f_current) - 1`
 
-## 🎨 Características Técnicas
+## Technical Features
 
-### Responsividad Inteligente
-- **Desktop**: Footer fijo al fondo de la pantalla
-- **Mobile/Tablet**: Footer después del contenido para evitar superposición
-- **Detección Automática**: Cálculo dinámico del espacio disponible
+### Smart Responsiveness
+- **Desktop**: Footer fixed at the bottom of the screen
+- **Mobile/Tablet**: Footer after content to avoid overlap
+- **Automatic Detection**: Dynamic calculation of available space
 
-### Optimización de Rendimiento
-- **Next.js 16**: Última versión con Turbopack para builds rápidos
-- **Componentes Memoizados**: Evitar re-renderizados innecesarios
-- **Carga Lazy**: Componentes cargados según demanda
+### Performance Optimization
+- **Next.js 16**: Latest version with Turbopack for fast builds
+- **Memoized Components**: Avoid unnecessary re-renders
+- **Lazy Loading**: Components loaded on demand
 
-### Accesibilidad
-- **Tooltips Informativos**: Explicaciones contextuales
-- **Contraste Adecuado**: Colores que cumplen estándares WCAG
-- **Navegación por Teclado**: Soporte completo para accesibilidad
+### Accessibility
+- **Informative Tooltips**: Contextual explanations
+- **Adequate Contrast**: Colors that meet WCAG standards
+- **Keyboard Navigation**: Full accessibility support
 
-## 🤝 Contribuir
-
-Las contribuciones son bienvenidas. Por favor:
-
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
-## 📝 Scripts Disponibles
+## Available Scripts
 
 ```bash
-# Desarrollo
-npm run dev          # Servidor de desarrollo
+# Development
+npm run dev          # Development server
 
-# Producción
-npm run build        # Build para producción
-npm run start        # Servidor de producción
+# Production
+npm run build        # Production build
+npm run start        # Production server
 
-# Calidad de código
-npm run lint         # Ejecutar ESLint
-npm run lint:fix     # Corregir errores de linting automáticamente
+# Code Quality
+npm run lint         # Run ESLint
+npm run lint:fix     # Automatically fix linting errors
 
 # Docker
-docker-compose up    # Ejecutar con Docker
+docker-compose up    # Run with Docker
 ```
 
-## 🐛 Problemas Conocidos
-
-- **Next.js 16 + Turbopack**: Requiere sintaxis estricta en callbacks
-- **Chart.js**: Algunos tipos requieren conversión explícita
-- **Responsive Design**: Algunas pantallas muy pequeñas pueden requerir scroll horizontal
-
-## 🚀 Roadmap
-
-- [ ] Exportación a PDF/Excel
-- [ ] Múltiples monedas
-- [ ] Comparación de escenarios
-- [ ] Calendario de pagos
-- [ ] Integración con APIs bancarias
-- [ ] Modo offline/PWA
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
-
-## 👤 Autor
+## Author
 
 **Steban** - [bscantor23](https://github.com/bscantor23)
-
 ---
-
-⭐ **¡No olvides dar una estrella al proyecto si te resultó útil!**

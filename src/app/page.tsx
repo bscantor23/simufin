@@ -34,24 +34,6 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Banner de Integrantes */}
-      <div className="bg-gradient-to-r from-yellow-500 to-yellow-500 text-white py-4">
-        <div className="max-w-8xl mx-auto px-4">
-          <div className="text-center">
-            <p className="text-sm font-medium mb-2">Desarrollado por:</p>
-            <div className="flex flex-wrap justify-center items-center gap-x-8 gap-y-2 text-sm">
-              <span className="font-semibold">[Brayan Steban Cantor Munevar 20252678006]</span>
-              <span className="hidden sm:inline text-blue-200">•</span>
-              <span className="font-semibold">[Jonathan Steven Malambo Trujillo 20252678010]</span>
-              <span className="hidden sm:inline text-blue-200">•</span>
-              <span className="font-semibold">[Javier Dario Florez Diaz 20242678006]</span>
-              <span className="hidden sm:inline text-blue-200">•</span>
-              <span className="font-semibold">[Daniel Andrés Ravelo Rivera 20252678003]</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Contenido principal */}
       <div className={hasEnoughHeight ? "pt-12 pb-24" : "pt-12"}>
         <div className="max-w-4xl mx-auto px-4">
